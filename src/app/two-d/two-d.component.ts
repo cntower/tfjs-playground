@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as tf from '@tensorflow/tfjs';
-// import * as tfvis from '@tensorflow/tfjs-vis';
-declare var tfvis: any;
+import * as tfvis from '@tensorflow/tfjs-vis';
 
 @Component({
   selector: 'app-two-d',
