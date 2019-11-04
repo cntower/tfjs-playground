@@ -26,7 +26,15 @@ export class TwoDComponent implements OnInit {
 
   async run() {
     // Load and plot the original input data that we are going to train on.
-    const data: { horsepower: number, mpg: number }[] = await getData();
+    // const data: { horsepower: number, mpg: number }[] = await getData();
+    const data: { horsepower: number, mpg: number }[] = [
+      { horsepower: 1, mpg: 1 },
+      { horsepower: 2, mpg: 2 },
+      { horsepower: 3, mpg: 3 },
+      { horsepower: 4, mpg: 4 },
+      { horsepower: 5, mpg: 5 }
+
+    ];
     plotData(data);
 
     // More code will be added below
@@ -41,6 +49,7 @@ export class TwoDComponent implements OnInit {
     // Train the model
     await this.trainModel(model, inputs, labels);
     console.log('Done Training');
+    const saveResults = await model.save('localstorage://my-model-1');
 
     return { model, data, tensorData };
   }
@@ -53,13 +62,13 @@ export class TwoDComponent implements OnInit {
       metrics: ['mse'],
     });
 
-    const batchSize = 32;
+    const batchSize = 5;
     const epochs = 50;
 
     return await model.fit(inputs, labels, {
       batchSize,
       epochs,
-      shuffle: true,
+      shuffle: false,
       callbacks: tfvis.show.fitCallbacks(
         { name: 'Training Performance' },
         ['loss', 'mse'],
@@ -156,8 +165,8 @@ function createModel() {
   const model = tf.sequential();
 
   // Add hidden layers
-  model.add(tf.layers.dense({ inputShape: [1], units: 50, useBias: true }));
-  model.add(tf.layers.dense({ inputShape: [50], units: 1, activation: 'sigmoid' }));
+  model.add(tf.layers.dense({ inputShape: [1], units: 1, useBias: true }));
+  // model.add(tf.layers.dense({ inputShape: [50], units: 1, activation: 'sigmoid' }));
 
   // Add an output layer
   model.add(tf.layers.dense({ units: 1, useBias: true }));
@@ -184,6 +193,7 @@ function convertToTensor(data) {
     const labels = data.map(d => d.mpg);
 
     const inputTensor = tf.tensor2d(inputs, [inputs.length, 1]);
+    inputTensor.print();
     const labelTensor = tf.tensor2d(labels, [labels.length, 1]);
 
     // Step 3. Normalize the data to the range 0 - 1 using min-max scaling
