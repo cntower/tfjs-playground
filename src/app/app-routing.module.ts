@@ -5,9 +5,9 @@ import { HandwrittenDigitRecognitionComponent } from './handwritten-digit-recogn
 import { LinearComponent } from './linear/linear.component';
 const routes: Routes = [
   { path: '', redirectTo: '2d', pathMatch: 'full' },
+  { path: 'linear', component: LinearComponent },
   { path: '2d', component: TwoDComponent },
   { path: 'digit', component: HandwrittenDigitRecognitionComponent },
-  { path: 'linear', component: LinearComponent },
 ];
 
 @NgModule({

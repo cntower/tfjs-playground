@@ -100,7 +100,6 @@ export class LinearComponent implements AfterViewInit {
 
 }
 
-
 // Get Mouse Position
 // tslint:disable-next-line: no-shadowed-variable
 function getMousePos(canvas: HTMLCanvasElement, evt: MouseEvent) {

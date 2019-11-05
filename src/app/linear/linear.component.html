@@ -1,1 +1,18 @@
-<canvas #canvas height="500" width="800" (click)="onCanvasClick($event)"></canvas>
+<p>
+  Please pick points on XY space
+</p>
+<canvas
+  #canvas
+  height="500"
+  width="800"
+  (click)="onCanvasClick($event)"
+></canvas>
+<p *ngIf="scaledPoints.length > 0">
+   y(x)=x*{{ m.dataSync().toLocaleString() }}+{{ b.dataSync().toLocaleString() }}
+</p>
+<ul>
+  <li *ngFor="let point of scaledPoints; let i = index">
+    P<small>{{ i }}</small
+    >[{{ point.x | number }}; {{ point.y | number }}]
+  </li>
+</ul>
