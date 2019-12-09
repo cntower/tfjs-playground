@@ -13,14 +13,34 @@ export class LinearComponent implements AfterViewInit {
   height: number;
   width: number;
   scaledPoints: Point2d[] = [];
-  m: tf.Variable<tf.Rank.R0>;
-  b: tf.Variable<tf.Rank.R0>;
-  learningRate = 0.1;
-  optimizer = tf.train.sgd(this.learningRate);
-  loss = (pred, label) => pred.sub(label).square().mean();
-  predict = (xs) => tf.tensor1d(xs).mul(this.m).add(this.b);
+  m0: tf.Variable<tf.Rank.R0>;
+  b0: tf.Variable<tf.Rank.R0>;
 
-  constructor() { }
+  a: tf.Variable<tf.Rank.R0> = tf.variable(tf.scalar(Math.random()));
+  b: tf.Variable<tf.Rank.R0> = tf.variable(tf.scalar(Math.random()));
+  c: tf.Variable<tf.Rank.R0> = tf.variable(tf.scalar(Math.random()));
+
+  learningRate = 0.2;
+  optimizer = tf.train.sgd(this.learningRate);
+  exp = 2;
+  variables: tf.Variable<tf.Rank.R0>[] = [];
+  loss = (pred, label) => pred.sub(label).square().mean();
+  predict = (xs) => tf.tensor1d(xs).mul(this.m0).add(this.b0);
+  // y=ax^2+bx^1+cx^0
+  // y=ax^2+bx+c
+  predictPolynomial2 = (xs) => tf.tensor1d(xs).square().mul(this.a).add(tf.tensor1d(xs).mul(this.b)).add(this.c);
+  predictPolynomial = (xs, exp) => {
+    let res = xs.pow(exp).mul(this.variables[0]);
+    for (let index = 1; index <= this.exp; index++) {
+      res = res.add(xs.pow(exp.sub(index)).mul(this.variables[index]));
+    }
+    return res;
+  }
+  constructor() {
+    for (let index = 0; index <= this.exp; index++) {
+      this.variables.push(tf.variable(tf.scalar(Math.random())));
+    }
+  }
   ngAfterViewInit(): void {
     this.ctx = this.canvas.nativeElement.getContext('2d');
     this.height = +this.canvas.nativeElement.getAttribute('height');
@@ -28,8 +48,8 @@ export class LinearComponent implements AfterViewInit {
     this.ctx.fillStyle = 'rgba(1,1,1,1)';
     this.ctx.fillRect(0, 0, this.width, this.height);
 
-    this.m = tf.variable(tf.scalar(Math.random()));
-    this.b = tf.variable(tf.scalar(Math.random()));
+    this.m0 = tf.variable(tf.scalar(Math.random()));
+    this.b0 = tf.variable(tf.scalar(Math.random()));
 
     setInterval(() => this.draw(), 30);
 
@@ -52,16 +72,22 @@ export class LinearComponent implements AfterViewInit {
 
     if (this.scaledPoints.length > 0) {
       tf.tidy(() => {
-        this.trainingStep().then((line) => {
+        this.trainingStepPolynomial().then(({ curveXs, curveYs }) => {
           this.ctx.fillRect(0, 0, this.width, this.height);
           this.ctx.strokeStyle = 'rgba(200,200,1,1)';
           this.scaledPoints.forEach((point) => {
             this.drawPoint(point.x, point.y, 8);
           });
-          this.ctx.lineWidth = 3;
-          this.ctx.moveTo(line.x1, line.y1);
-          this.ctx.lineTo(line.x2, line.y2);
-          this.ctx.stroke();
+          this.ctx.lineWidth = 2;
+
+          const naturXs = curveXs.map(x => scale(x, -1, 1, 0, this.width));
+          const naturYs = curveYs.map(y => scale(y, -1, 1, this.height, 0));
+
+          for (let index = 1; index < naturXs.length; index++) {
+            this.ctx.moveTo(naturXs[index - 1], naturYs[index - 1]);
+            this.ctx.lineTo(naturXs[index], naturYs[index]);
+            this.ctx.stroke();
+          }
         });
       });
 
@@ -82,6 +108,29 @@ export class LinearComponent implements AfterViewInit {
 
       // console.log(this.m.toString(), tf.memory().numTensors);
       return { x1, x2, y1, y2 };
+    });
+
+  }
+
+  trainingStepPolynomial() {
+
+    const curveXs = [];
+    for (let x = -1; x < 1.1; x += 0.05) {
+      curveXs.push(x);
+    }
+    const ys = tf.tensor1d(this.scaledPoints.map(p => p.y));
+
+    this.optimizer.minimize(() => this.loss(this.predictPolynomial(
+      tf.tensor1d(this.scaledPoints.map(p => p.x)),
+      tf.scalar(this.exp)
+    ), ys));
+    const curveYsRaw = this.predictPolynomial(
+      tf.tensor1d(curveXs),
+      tf.scalar(this.exp)
+    );
+    return curveYsRaw.data().then(curveYs => {
+      // console.log(curveYs);
+      return { curveXs, curveYs };
     });
 
   }

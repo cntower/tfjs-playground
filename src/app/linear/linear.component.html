@@ -8,7 +8,7 @@
   (click)="onCanvasClick($event)"
 ></canvas>
 <p *ngIf="scaledPoints.length > 0">
-   y(x)=x*{{ m.dataSync().toLocaleString() }}+{{ b.dataSync().toLocaleString() }}
+   y(x)=x*{{ m0.dataSync().toLocaleString() }}+{{ b0.dataSync().toLocaleString() }}
 </p>
 <ul>
   <li *ngFor="let point of scaledPoints; let i = index">
